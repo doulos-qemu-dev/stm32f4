@@ -1,0 +1,16 @@
+# [GNU ARM Eclipse]
+
+obj-$(CONFIG_STM32) += boards-discovery.o boards-olimex.o boards-duino.o boards-nucleo.o
+obj-$(CONFIG_STM32) += mcu.o mcus.o 
+obj-$(CONFIG_STM32) += sys-bus-device.o 
+obj-$(CONFIG_STM32) += rcc.o 
+obj-$(CONFIG_STM32) += flash.o
+obj-$(CONFIG_STM32) += pwr.o
+obj-$(CONFIG_STM32) += gpio.o
+obj-$(CONFIG_STM32) += usart.o
+obj-$(CONFIG_STM32) += exti.o
+
+obj-$(CONFIG_STM32) += syscfg.o
+obj-$(CONFIG_STM32) += afio.o
+
+# [GNU ARM Eclipse]
