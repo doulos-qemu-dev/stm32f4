@@ -31,6 +31,7 @@
 #include "verbosity.h"
 #endif
 
+
 // ----------------------------------------------------------------------------
 
 static void cortexm_graphic_board_init_graphic_context(
@@ -41,8 +42,16 @@ static void cortexm_graphic_led_init_graphic_context(
         LEDGraphicContext *led_graphic_context, uint8_t red, uint8_t green,
         uint8_t blue);
 
+static void cortexm_graphic_display_init_graphic_context(
+        BoardGraphicContext *board_graphic_context,
+        DISPLAYGraphicContext *display_graphic_context, uint8_t red, uint8_t green,
+        uint8_t blue);
+
 static void cortexm_graphic_led_turn(BoardGraphicContext *board_graphic_context,
         LEDGraphicContext *led_graphic_context, bool is_on);
+
+static void cortexm_graphic_display_turn(BoardGraphicContext *board_graphic_context,
+        DISPLAYGraphicContext *display_graphic_context, bool is_on);
 
 static void cortexm_graphic_process_mouse_motion(void);
 
@@ -71,6 +80,7 @@ static BoardGraphicContext *board_graphic_context;
 static void cortexm_graphic_process_event(SDL_Event* event)
 {
     GPIOLEDState *state;
+    GPIODISPLAYState *display_state;
     bool is_on;
     int exit_code;
 
@@ -163,6 +173,26 @@ static void cortexm_graphic_process_event(SDL_Event* event)
 
             cortexm_graphic_led_turn(state->board_graphic_context,
                     &(state->led_graphic_context), is_on);
+            break;
+
+        case GRAPHIC_EVENT_DISPLAY_INIT:
+            display_state = (GPIODISPLAYState *) event->user.data1;
+
+            if (!cortexm_graphic_display_is_graphic_context_initialised(
+                    &(display_state->display_graphic_context))) {
+                cortexm_graphic_display_init_graphic_context(
+                		display_state->board_graphic_context,
+                        &(display_state->display_graphic_context), display_state->colour.red,
+						display_state->colour.green, display_state->colour.blue);
+            }
+            break;
+
+        case GRAPHIC_EVENT_DISPLAY_TURN:
+        	display_state = (GPIODISPLAYState *) event->user.data1;
+            is_on = (bool) event->user.data2;
+
+            cortexm_graphic_display_turn(display_state->board_graphic_context,
+                    &(display_state->display_graphic_context), is_on);
             break;
 
         case GRAPHIC_EVENT_QUIT:
@@ -710,6 +740,98 @@ static void cortexm_graphic_led_turn(BoardGraphicContext *board_graphic_context,
 #elif defined(CONFIG_SDLABI_1_2)
     SDL_BlitSurface(crop, NULL, board_graphic_context->surface,
             &(led_graphic_context->rectangle));
+    SDL_Flip(board_graphic_context->surface);
+#endif
+
+#endif /* defined(CONFIG_SDL) */
+}
+
+// ----------------------------------------------------------------------------
+
+void cortexm_graphic_display_clear_graphic_context(
+        DISPLAYGraphicContext *display_graphic_context)
+{
+    qemu_log_function_name();
+
+    display_graphic_context->crop_on = NULL;
+    display_graphic_context->crop_off = NULL;
+}
+
+bool cortexm_graphic_display_is_graphic_context_initialised(
+        DISPLAYGraphicContext *display_graphic_context)
+{
+    return (display_graphic_context->crop_on != NULL);
+}
+
+static void cortexm_graphic_display_init_graphic_context(
+        BoardGraphicContext *board_graphic_context,
+        DISPLAYGraphicContext *display_graphic_context, uint8_t red, uint8_t green,
+        uint8_t blue)
+{
+    qemu_log_function_name();
+
+#if defined(CONFIG_SDL)
+
+    SDL_Surface *surface = board_graphic_context->surface;
+    SDL_Rect *rectangle = &(display_graphic_context->rectangle);
+
+#if defined(CONFIG_SDLABI_2_0)
+
+    display_graphic_context->crop_off = SDL_ConvertSurfaceFormat(surface,
+            SDL_PIXELFORMAT_RGB888, 0);
+
+    display_graphic_context->crop_on = SDL_ConvertSurfaceFormat(surface,
+            SDL_PIXELFORMAT_RGB888, 0);
+
+#elif defined(CONFIG_SDLABI_1_2)
+
+    display_graphic_context->crop_off = SDL_CreateRGBSurface(surface->flags,
+            rectangle->w, rectangle->h, surface->format->BitsPerPixel,
+            surface->format->Rmask, surface->format->Gmask,
+            surface->format->Bmask, surface->format->Amask);
+
+    display_graphic_context->crop_on = SDL_CreateRGBSurface(surface->flags,
+            rectangle->w, rectangle->h, surface->format->BitsPerPixel,
+            surface->format->Rmask, surface->format->Gmask,
+            surface->format->Bmask, surface->format->Amask);
+
+#endif
+
+    // Copy bitmap from original picture.
+    SDL_BlitSurface(board_graphic_context->surface, rectangle,
+            display_graphic_context->crop_off, 0);
+
+    Uint32 colour = SDL_MapRGB(display_graphic_context->crop_on->format, red, green,
+            blue);
+
+    // Fill with uniform colour.
+    SDL_FillRect(display_graphic_context->crop_on, NULL, colour);
+
+#endif /* defined(CONFIG_SDL) */
+}
+
+static void cortexm_graphic_display_turn(BoardGraphicContext *board_graphic_context,
+        DISPLAYGraphicContext *display_graphic_context, bool is_on)
+{
+    qemu_log_mask(LOG_FUNC, "%s(%s)\n", __FUNCTION__, is_on ? "on" : "off");
+
+#if defined(CONFIG_SDL)
+
+    SDL_Surface *crop =
+            is_on ?
+                    display_graphic_context->crop_on :
+                    display_graphic_context->crop_off;
+
+#if defined(CONFIG_SDLABI_2_0)
+    SDL_UpdateTexture(board_graphic_context->texture,
+            &(display_graphic_context->rectangle), crop->pixels, crop->pitch);
+    SDL_RenderCopy(board_graphic_context->renderer,
+            board_graphic_context->texture,
+            NULL, NULL);
+    SDL_RenderPresent(board_graphic_context->renderer);
+#elif defined(CONFIG_SDLABI_1_2)
+    SDL_BlitSurface(crop, NULL, board_graphic_context->surface,
+            &(display_graphic_context->rectangle));
     SDL_Flip(board_graphic_context->surface);
 #endif
 

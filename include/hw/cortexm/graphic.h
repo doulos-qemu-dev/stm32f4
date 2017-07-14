@@ -101,6 +101,16 @@ typedef struct {
 
 // ----------------------------------------------------------------------------
 
+
+// Storage for 7-segment LED display graphic context, stored in GPIODISPLAYState
+typedef struct {
+    SDL_Rect rectangle;
+    SDL_Surface *crop_off;
+    SDL_Surface *crop_on;
+} DISPLAYGraphicContext;
+
+// ----------------------------------------------------------------------------
+
 enum {
     GRAPHIC_EVENT_NONE = 0,
     GRAPHIC_EVENT_QUIT,
@@ -108,6 +118,8 @@ enum {
     GRAPHIC_EVENT_BOARD_INIT,
     GRAPHIC_EVENT_LED_INIT,
     GRAPHIC_EVENT_LED_TURN,
+    GRAPHIC_EVENT_DISPLAY_INIT,
+    GRAPHIC_EVENT_DISPLAY_TURN,
 };
 
 // ----------------------------------------------------------------------------
@@ -142,6 +154,13 @@ void cortexm_graphic_led_clear_graphic_context(
 
 bool cortexm_graphic_led_is_graphic_context_initialised(
         LEDGraphicContext *led_graphic_context);
+
+// ----- 7-segment LED display graphic function -----
+void cortexm_graphic_display_clear_graphic_context(
+        DISPLAYGraphicContext *led_graphic_context);
+
+bool cortexm_graphic_display_is_graphic_context_initialised(
+        DISPLAYGraphicContext *led_graphic_context);
 
 // ----------------------------------------------------------------------------
 

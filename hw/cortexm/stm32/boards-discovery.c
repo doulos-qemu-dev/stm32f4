@@ -29,6 +29,7 @@
  * Where available, the board names follow the CMSIS Packs names.
  */
 
+
 // ----- ST STM32F0-Discovery -------------------------------------------------
 // C8 blue, C9 green, active high
 static GPIOLEDInfo stm32f0_discovery_leds_info[] = {
@@ -197,6 +198,63 @@ static GPIOLEDInfo stm32f4_discovery_leds_info[] = {
 /**/
 };
 
+static GPIODISPLAYInfo stm32f4_discovery_display_info[] = {
+    {
+        .name = "display:a",
+        //.active_low = false,
+        .colour_name = "Red",
+        .x = 700,
+        .y = 148,
+        .w = 15,
+        .h = 48,
+        .gpio_path = DEVICE_PATH_STM32_GPIO_D,
+        .irq_name = STM32_IRQ_GPIO_ODR_OUT,
+        .gpio_bit = 12,
+    /**/
+    },
+    {
+        .name = "display:b",
+        //.active_low = false,
+        .colour_name = "Red",
+        .x = 710,
+        .y = 80,
+        .w = 15,
+        .h = 18,
+        .gpio_path = DEVICE_PATH_STM32_GPIO_D,
+        .irq_name = STM32_IRQ_GPIO_ODR_OUT,
+        .gpio_bit = 13,
+    /**/
+    },
+//    {
+//        .name = "led:red",
+//        .active_low = false,
+//        .colour_name = "Red",
+//        .x = 247,
+//        .y = 262,
+//        .w = 8,
+//        .h = 10,
+//        .gpio_path = DEVICE_PATH_STM32_GPIO_D,
+//        .irq_name = STM32_IRQ_GPIO_ODR_OUT,
+//        .gpio_bit = 14,
+//    /**/
+//    },
+//    {
+//        .name = "led:blue",
+//        .active_low = false,
+//        .colour_name = "blue",
+//        .x = 218,
+//        .y = 233,
+//        .w = 8,
+//        .h = 10,
+//        .gpio_path = DEVICE_PATH_STM32_GPIO_D,
+//        .irq_name = STM32_IRQ_GPIO_ODR_OUT,
+//        .gpio_bit = 15,
+//    /**/
+//    },
+    { },
+/**/
+};
+
 static ButtonGPIOInfo stm32f4_discovery_buttons_user_info[] = {
     {
         .name = "button:user",
@@ -258,6 +316,9 @@ static void stm32f4_discovery_board_init_callback(MachineState *machine)
     Object *peripheral = cm_container_get_peripheral();
     // Create board LEDs.
     gpio_led_create_from_info(peripheral, stm32f4_discovery_leds_info,
+            board_graphic_context);
+
+    gpio_display_create_from_info(peripheral, stm32f4_discovery_display_info,
             board_graphic_context);
 
     if (board_graphic_context != NULL) {

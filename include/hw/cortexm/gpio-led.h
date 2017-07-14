@@ -29,6 +29,8 @@
 #include <hw/cortexm/graphic.h>
 
 // ----------------------------------------------------------------------------
+//#define CONFIG_SDLABI_2_0
+//#define CONFIG_SDL
 
 #define IRQ_GPIO_LED_IN     "led-in"
 
